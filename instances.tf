@@ -4,14 +4,16 @@ locals {
   user_data = <<EOF
     #cloud-config
     runcmd:
-    - sudo docker run -d -p 80:80 nginx:latest
+    - sudo $(aws ecr get-login --no-include-email --region us-west-2);
+    - sudo docker run -d -p 3000:3000 780533555440.dkr.ecr.us-west-2.amazonaws.com/grafana-stage
   EOF
 }
 
 resource "aws_instance" "terraform-blue-green" {
   count                  = 2
-  ami                    = "ami-01d3a624c504dceda"
+  ami                    = "ami-089642cd2741957fc"
   instance_type          = "t2.micro"
+  iam_instance_profile   = "ecr_read_only"
   subnet_id              = "${element(local.subnets, count.index)}"
   vpc_security_group_ids = ["${aws_security_group.terraform-blue-green.id}"]
   key_name               = "terraform-blue-green-v1"

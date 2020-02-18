@@ -9,12 +9,16 @@ resource "aws_security_group" "terraform-blue-green" {
 }
 
 resource "aws_security_group_rule" "terraform-blue-green-inbound" {
+ 
+ 
   type              = "ingress"
   security_group_id = "${aws_security_group.terraform-blue-green.id}"
-  from_port         = -1
-  to_port           = 0
-  protocol          = "-1"
-
+  from_port         = 22
+  to_port           = 22
+  protocol          = "ssh"
+  from_port	    = 3000
+  to_port           = 3000
+  protocol          = "tcp"	
   cidr_blocks = ["0.0.0.0/0"]
 }
 
