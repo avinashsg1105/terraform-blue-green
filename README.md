@@ -6,4 +6,4 @@ Manual steps,
 3)internet gateway must be hosted to the created Vpc for public access,
 4)check route table and subnet associations for public access.
 
-*************Will be completely automated in the future************
+************Will be completely automated in the future************
