@@ -4,7 +4,8 @@ locals {
   user_data = <<EOF
     #cloud-config
     runcmd:
-    - sudo docker run -d -p 80:80 nginx:latest
+    - sudo ansible-inventory -i /opt/ansible/inventory/aws_ec2.yaml --list
+    - sudo aws ec2 wait instance-status-ok --instance-ids ${aws_instance.terraform-blue-green.*.id} --profile ${var.aws_profile} && cd .. && ansible-playbook -vv --private-key /var/lib/jenkins/.ssh/id_rsa -i /opt/ansible/inventory/aws_ec2.yaml master-install-mediawiki.yaml -e host=tag_Name_terraform-blue-green.*.id
   EOF
 }
 
