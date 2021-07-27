@@ -25,10 +25,34 @@ resource "aws_eip" "nat_eip" {
 /* NAT */
 resource "aws_nat_gateway" "nat" {
   allocation_id = "${aws_eip.nat_eip.id}"
-  subnet_id     = "${element(aws_subnet.public_subnet.*.id, 0)}"
+  subnet_id     = "${element(aws_subnet.terraform-blue-green.*.id, 0)}"
   depends_on    = [aws_internet_gateway.ig]
   tags = {
     Name        = "nat"
+    Environment = "${var.environment}"
+  }
+}
+/* Public subnet */
+resource "aws_subnet" "terraform-blue-green" {
+  vpc_id                  = "${aws_vpc.vpc.id}"
+  count                   = "${length(var.terraform-blue-greens_cidr)}"
+  cidr_block              = "${element(var.terraform-blue-greens_cidr,   count.index)}"
+  availability_zone       = "${element(var.availability_zones,   count.index)}"
+  map_public_ip_on_launch = true
+  tags = {
+    Name        = "${var.environment}-${element(var.availability_zones, count.index)}-      public-subnet"
+    Environment = "${var.environment}"
+  }
+}
+/* Private subnet */
+resource "aws_subnet" "terraform-blue-green" {
+  vpc_id                  = "${aws_vpc.vpc.id}"
+  count                   = "${length(var.terraform-blue-greens_cidr)}"
+  cidr_block              = "${element(var.terraform-blue-greens_cidr, count.index)}"
+  availability_zone       = "${element(var.availability_zones,   count.index)}"
+  map_public_ip_on_launch = false
+  tags = {
+    Name        = "${var.environment}-${element(var.availability_zones, count.index)}-private-subnet"
     Environment = "${var.environment}"
   }
 }
@@ -60,13 +84,13 @@ resource "aws_route" "private_nat_gateway" {
 }
 /* Route table associations */
 resource "aws_route_table_association" "public" {
-  count          = "${length(var.public_subnets_cidr)}"
-  subnet_id      = "${element(aws_subnet.public_subnet.*.id, count.index)}"
+  count          = "${length(var.terraform-blue-greens_cidr)}"
+  subnet_id      = "${element(aws_subnet.terraform-blue-green.*.id, count.index)}"
   route_table_id = "${aws_route_table.public.id}"
 }
 resource "aws_route_table_association" "private" {
-  count          = "${length(var.private_subnets_cidr)}"
-  subnet_id      = "${element(aws_subnet.private_subnet.*.id, count.index)}"
+  count          = "${length(var.terraform-blue-greens_cidr)}"
+  subnet_id      = "${element(aws_subnet.terraform-blue-green.*.id, count.index)}"
   route_table_id = "${aws_route_table.private.id}"
 }
 /*==== VPC's Default Security Group ======*/
